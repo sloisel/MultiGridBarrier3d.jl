@@ -64,12 +64,11 @@ jobs:
       actions: write # needed to allow julia-actions/cache to proactively delete old caches that it has created
       contents: write
       statuses: write
+      pages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Install XVFB
-        run: sudo apt-get install -y xvfb
+      - name: Install FFmpeg and XVFB
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg xvfb
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -86,9 +85,7 @@ jobs:
           using Pkg
           Pkg.develop(PackageSpec(path=pwd()))
           Pkg.instantiate()
-      - uses: julia-actions/julia-buildpkg@v1
       - name: Run doctests and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: xvfb-run --auto-servernum julia --project=docs --color=yes docs/make.jl
