@@ -1,0 +1,35 @@
+# Julia
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+/Manifest.toml
+# Documentation
+docs/build/
+docs/site/
+docs/Manifest.toml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Temporary development files
+dev/
+tmp/
+/deps/build.log
+/deps/deps.jl
+/deps/downloads/
+/deps/usr/
+
+# Output files
+output.txt
+output_*.txt
+*.png
+*.vtu
+*.vts
+*.log
+
+# Mac
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
