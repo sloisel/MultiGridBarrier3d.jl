@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 concurrency:
   # Skip intermediate builds: always.
   # Cancel intermediate builds: only if it is a pull request build.
@@ -16,6 +17,10 @@ jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    permissions: # needed to allow julia-actions/cache to proactively delete old caches that it has created
+      actions: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -26,20 +31,29 @@ jobs:
           - ubuntu-latest
         arch:
           - x64
-    env:
-      PYTHON: ""
     steps:
       - uses: actions/checkout@v4
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install XVFB
+        run: sudo apt-get install -y xvfb
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip
+      - run: pip install 'matplotlib==3.8.3'
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
+      - name: Run tests with XVFB
+        run: xvfb-run --auto-servernum julia --project=. -e 'using Pkg; Pkg.test(coverage=true)'
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v4
         with:
           files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
+
