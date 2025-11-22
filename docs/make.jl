@@ -8,13 +8,17 @@ using PyPlot
 
 makedocs(
     sitename = "MultiGridBarrier3d.jl",
-    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
+    remotes = nothing,
+    warnonly = [:missing_docs, :cross_references, :docs_block],
     modules = [MultiGridBarrier3d],
     pages = [
         "Home" => "index.md",
         "API Reference" => "api.md"
     ],
-    # remotes = nothing,
+    format = Documenter.HTML(
+        prettyurls = get(ENV, "CI", nothing) == "true",
+        canonical = "https://sloisel.github.io/MultiGridBarrier3d.jl/stable/",
+    ),
     checkdocs = :exports
 )
 
