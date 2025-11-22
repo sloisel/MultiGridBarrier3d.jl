@@ -23,6 +23,6 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/sloisel/MultiGridBarrier3d.jl.git",
+    repo = "github.com/sloisel/MultiGridBarrier3d.jl",
     devbranch = "main",
 )
