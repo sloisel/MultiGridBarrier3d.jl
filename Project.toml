@@ -16,7 +16,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 [compat]
 julia = "1.10"
 FileIO = "1"
-MultiGridBarrier = "0.1"
+MultiGridBarrier = "0.11"
 PNGFiles = "0.4"
 PyCall = "1"
 PyPlot = "2"
