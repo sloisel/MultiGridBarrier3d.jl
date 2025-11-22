@@ -53,7 +53,7 @@ end
     plot(geo::Geometry, u::Vector; 
          volume=(;), 
          isosurfaces=T[], 
-         contour_mesh=(opacity=0.5;),
+         contour_mesh=(opacity=0.5,),
          slice_orthogonal=nothing, 
          slice_orthogonal_mesh=(;),
          slice=nothing, 
@@ -63,7 +63,7 @@ end
          resolution=(800, 600),
          show_grid=false,
          camera_position=nothing,
-         u_name="u")
+         kwargs...)
 
 Plot the solution `u` on the geometry `geo` using PyVista.
 Extends `PyPlot.plot`.
@@ -83,7 +83,6 @@ Extends `PyPlot.plot`.
 - `resolution`: Image resolution (width, height).
 - `show_grid`: Show the wireframe grid.
 - `camera_position`: Optional camera position.
-- `u_name`: Name of the scalar field (default "u").
 
 # Returns
 - `MGB3DFigure`: Object that displays as a PNG in Jupyter.
@@ -110,7 +109,7 @@ plot(geo, u; slice=(normal=[1,1,1], origin=[0,0,0]))
 function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T}; 
                        volume=(;), 
                        isosurfaces=T[], 
-                       contour_mesh=(opacity=0.5;),
+                       contour_mesh=(opacity=0.5,),
                        slice_orthogonal=nothing,
                        slice_orthogonal_mesh=(;),
                        slice=nothing,
@@ -120,7 +119,10 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
                        resolution=(800, 600),
                        show_grid=false,
                        camera_position=nothing,
-                       u_name="u") where {T,X,W,M,k}
+                       kwargs...) where {T,X,W,M,k}
+    
+    # Internal name for the scalar field
+    u_name = "u"
 
     # Smart default for volume: if isosurfaces or slices are present, default volume to false, else true.
 #    if isnothing(volume)
@@ -140,17 +142,13 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
     pl = pv.Plotter(off_screen=true, window_size=resolution)
     
     if !isnothing(volume)
-        pl.add_volume(grid, scalars=u_name; volume...)
+        pl.add_volume(grid, scalars=u_name; show_scalar_bar=false, volume...)
     end
     
     if length(isosurfaces)>0
-#        if isosurfaces isa Int
-#            contours = grid.contour(isosurfaces=isosurfaces, scalars="u")
-#        else
-            contours = grid.contour(isosurfaces=collect(isosurfaces), scalars=u_name)
-#        end
+        contours = grid.contour(isosurfaces=collect(isosurfaces), scalars=u_name)
         if contours.n_points > 0
-            pl.add_mesh(contours; contour_mesh...) #, opacity=0.5, show_scalar_bar=false, cmap=cmap)
+            pl.add_mesh(contours; show_scalar_bar=false, contour_mesh...) #, opacity=0.5, show_scalar_bar=false, cmap=cmap)
         else
             @warn "Isosurface generation resulted in an empty mesh. Check if isosurface values are within the range of the solution."
         end
@@ -159,17 +157,17 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
     # New slicing options passed as dictionaries
     if !isnothing(slice_orthogonal)
         sl = grid.slice_orthogonal(; slice_orthogonal...)
-        pl.add_mesh(sl; slice_orthogonal_mesh...)
+        pl.add_mesh(sl; show_scalar_bar=false, slice_orthogonal_mesh...)
     end
 
     if !isnothing(slice)
         sl = grid.slice(; slice...)
-        pl.add_mesh(sl; slice_mesh...)
+        pl.add_mesh(sl; show_scalar_bar=false, slice_mesh...)
     end
 
     if !isnothing(slice_along_axis)
         sl = grid.slice_along_axis(; slice_along_axis...)
-        pl.add_mesh(sl; slice_along_axis_mesh...)
+        pl.add_mesh(sl; show_scalar_bar=false, slice_along_axis_mesh...)
     end
 
     if show_grid

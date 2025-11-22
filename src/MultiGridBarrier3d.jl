@@ -14,7 +14,7 @@ using .Plotting
 export FEM3D, plot, savefig, fem3d, fem3d_solve
 
 """
-    fem3d_solve(::Type{T}=Float64; 
+    fem3d_solve(::Type{T}=Float64;
                 D = [:u :id; :u :dx; :u :dy; :u :dz; :s :id],
                 f = (x) -> T[0.5, 0.0, 0.0, 0.0, 1.0],
                 g = (x) -> T[x[1]^2 + x[2]^2 + x[3]^2, 100.0],
@@ -23,14 +23,14 @@ export FEM3D, plot, savefig, fem3d, fem3d_solve
 Solve a 3D PDE using the Spectral Barrier Method.
 
 # Arguments
-- `T`: Numeric type (default `Float64`).
-- `D`: Operator structure definition.
-- `f`: Source term function. Must return a Vector of length matching `D` (default 5).
-- `g`: Boundary condition function.
-- `rest...`: Additional arguments passed to `fem3d` and `amgb` (e.g., `L`, `k`, `maxiter`).
+- `T`: Floating-point type for computations (default `Float64`).
+- `D`: Operator structure matrix defining the PDE.
+- `f`: Source term function `f(x) -> Vector{T}`. Must return a vector of length matching rows of `D`.
+- `g`: Boundary condition function `g(x) -> Vector{T}`.
+- `rest...`: Additional keyword arguments passed to `fem3d` (e.g., `L`, `k`) and `amgb` (e.g., `maxiter`, `verbose`).
 
 # Returns
-- `AMGBSOL`: Solution object containing the result `z` and convergence history.
+An `AMGBSOL` object containing the solution field `z` and convergence history.
 """
 function fem3d_solve(::Type{T}=Float64; 
     D = [:u :id; :u :dx; :u :dy; :u :dz; :s :id],

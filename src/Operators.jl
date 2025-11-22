@@ -76,10 +76,11 @@ function interpolation_matrix_1d(coarse_nodes, fine_nodes)
 end
 
 """
-    build_operators(x::Matrix{T}, k::Int)
+    build_operators(x::Matrix{T}, ref_el::ReferenceElement{T})
 
-Build operators for the given mesh `x` and order `k`.
-Returns `operators` dict.
+Build differential operators for the mesh `x` using the reference element `ref_el`.
+
+Returns a `Dict{Symbol, SparseMatrixCSC}` with keys `:dx`, `:dy`, `:dz`, and `:id`.
 """
 function build_operators(x::Matrix{T}, ref_el::ReferenceElement{T}) where T
     n_nodes_per_elem = (ref_el.k+1)^3

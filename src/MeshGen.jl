@@ -324,7 +324,7 @@ end
     promote_to_Qk(K_q1::Matrix{T}, k::Int)
 
 Promote a Q1 mesh `K_q1` (N x 3, where N is a multiple of 8) to a Q_k mesh.
-Each chunk of 8 rows in `K_q1` represents a linear hexahedron.
+Each group of 8 rows in `K_q1` represents one linear hexahedron.
 Returns a new mesh (M x 3) where each element is replaced by (k+1)^3 nodes
 located at the mapped Chebyshev-Lobatto points.
 """

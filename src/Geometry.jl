@@ -41,8 +41,14 @@ end
 """
     fem3d(::Type{T}=Float64; L::Int=2, K=nothing, k::Int=3, rest...)
 
-Create a Geometry object for Q_k elements with L multigrid levels.
-`K` is the coarse Q1 mesh (N x 3 matrix). If `nothing`, defaults to a single cube [-1,1]^3.
+Create a `Geometry` object for Q_k hexahedral elements with `L` multigrid levels.
+
+# Arguments
+- `T`: Floating-point type (default `Float64`).
+- `L`: Number of multigrid levels.
+- `K`: Coarse Q1 mesh as an N x 3 matrix, where N is a multiple of 8 (8 vertices per hexahedron).
+       If `nothing`, defaults to a single cube [-1,1]^3.
+- `k`: Polynomial order of elements (default 3).
 """
 function fem3d(::Type{T}=Float64; L::Int=2, K=nothing, k::Int=3, rest...) where T
     # Coarse grid (Level 1)
