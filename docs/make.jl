@@ -8,16 +8,17 @@ using PyPlot
 
 makedocs(
     sitename = "MultiGridBarrier3d.jl",
-    format = Documenter.HTML(prettyurls = false),
+    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     modules = [MultiGridBarrier3d],
     pages = [
         "Home" => "index.md",
         "API Reference" => "api.md"
     ],
-    remotes = nothing,
+    # remotes = nothing,
     checkdocs = :exports
 )
 
 deploydocs(
     repo = "github.com/sloisel/MultiGridBarrier3d.jl.git",
+    devbranch = "main",
 )

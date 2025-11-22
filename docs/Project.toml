@@ -2,3 +2,6 @@
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 MultiGridBarrier3d = "594ea493-0a2f-4496-9340-85da5d8e0ddf"
 PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
+
+[compat]
+Documenter = "1"
