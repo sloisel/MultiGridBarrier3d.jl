@@ -4,8 +4,8 @@ using LinearAlgebra
 using SparseArrays
 using MultiGridBarrier
 
+include("ReferenceElement.jl")
 include("Geometry.jl")
-
 include("MeshGen.jl")
 include("Operators.jl")
 include("Plotting.jl")

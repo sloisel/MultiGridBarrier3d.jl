@@ -73,25 +73,9 @@ function fem3d(::Type{T}=Float64; L::Int=2, K=nothing, k::Int=3, rest...) where 
     # We need to do this for Level 1 specifically because the loop starts at l=1 (refining 1 to 2).
     
     # Helper to compute weights for a mesh
-    function compute_weights(mesh_x, k_order)
-        n_nodes_per_elem = (k_order+1)^3
+    function compute_weights(mesh_x, ref_el::ReferenceElement)
+        n_nodes_per_elem = (ref_el.k+1)^3
         n_elems = div(size(mesh_x, 1), n_nodes_per_elem)
-        
-        _, w_ref_elem = cube_mesh(k_order)
-        w_ref_elem = T.(w_ref_elem)
-        
-        # Build operators to get derivatives for Jacobian
-        # Note: This might be expensive if we only need weights, but we need operators anyway later.
-        # Actually we build operators for all levels at the end? No, we build them in the loop.
-        
-        # We need D_xi, D_eta, D_zeta
-        nodes_1d = chebyshev_nodes(k_order)
-        D_1d = derivative_matrix_1d(nodes_1d)
-        I_1d = I(k_order+1)
-        
-        D_xi_local = kron(I_1d, kron(I_1d, D_1d))
-        D_eta_local = kron(I_1d, kron(D_1d, I_1d))
-        D_zeta_local = kron(D_1d, kron(I_1d, I_1d))
         
         w_physical = zeros(T, size(mesh_x, 1))
         
@@ -103,17 +87,17 @@ function fem3d(::Type{T}=Float64; L::Int=2, K=nothing, k::Int=3, rest...) where 
             y_elem = mesh_x[start_idx:end_idx, 2]
             z_elem = mesh_x[start_idx:end_idx, 3]
             
-            x_xi = D_xi_local * x_elem
-            x_eta = D_eta_local * x_elem
-            x_zeta = D_zeta_local * x_elem
+            x_xi = ref_el.D_xi_local * x_elem
+            x_eta = ref_el.D_eta_local * x_elem
+            x_zeta = ref_el.D_zeta_local * x_elem
             
-            y_xi = D_xi_local * y_elem
-            y_eta = D_eta_local * y_elem
-            y_zeta = D_zeta_local * y_elem
+            y_xi = ref_el.D_xi_local * y_elem
+            y_eta = ref_el.D_eta_local * y_elem
+            y_zeta = ref_el.D_zeta_local * y_elem
             
-            z_xi = D_xi_local * z_elem
-            z_eta = D_eta_local * z_elem
-            z_zeta = D_zeta_local * z_elem
+            z_xi = ref_el.D_xi_local * z_elem
+            z_eta = ref_el.D_eta_local * z_elem
+            z_zeta = ref_el.D_zeta_local * z_elem
             
             for i in 1:n_nodes_per_elem
                 J = [x_xi[i] x_eta[i] x_zeta[i];
@@ -121,18 +105,19 @@ function fem3d(::Type{T}=Float64; L::Int=2, K=nothing, k::Int=3, rest...) where 
                      z_xi[i] z_eta[i] z_zeta[i]]
                 
                 detJ = abs(det(J))
-                w_physical[start_idx + i - 1] = w_ref_elem[i] * detJ
+                w_physical[start_idx + i - 1] = ref_el.weights_ref[i] * detJ
             end
         end
         return w_physical
     end
     
-    weights[1] = compute_weights(meshes[1], k)
+    ref_el = ReferenceElement(k, T)
+    weights[1] = compute_weights(meshes[1], ref_el)
     
     # Refine to create hierarchy
     for l in 1:L-1
         meshes[l+1] = refine_mesh(meshes[l], k)
-        weights[l+1] = compute_weights(meshes[l+1], k)
+        weights[l+1] = compute_weights(meshes[l+1], ref_el)
     end
     
     # Build subspaces and operators
@@ -166,7 +151,7 @@ function fem3d(::Type{T}=Float64; L::Int=2, K=nothing, k::Int=3, rest...) where 
     
     # Fine grid operators
 
-    ops::Dict{Symbol, SparseMatrixCSC{T, Int}} = build_operators(meshes[L], k)
+    ops::Dict{Symbol, SparseMatrixCSC{T, Int}} = build_operators(meshes[L], ref_el)
     
     # Discretization object
     disc = FEM3D{k, T}(K_q1, L)

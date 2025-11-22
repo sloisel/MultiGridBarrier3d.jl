@@ -81,26 +81,15 @@ end
 Build operators for the given mesh `x` and order `k`.
 Returns `operators` dict.
 """
-function build_operators(x::Matrix{T}, k::Int) where T
-    n_nodes_per_elem = (k+1)^3
+function build_operators(x::Matrix{T}, ref_el::ReferenceElement{T}) where T
+    n_nodes_per_elem = (ref_el.k+1)^3
     n_elems = div(size(x, 1), n_nodes_per_elem)
     n_total = size(x, 1)
     
-    nodes_1d = chebyshev_nodes(k)
-    D_1d = derivative_matrix_1d(nodes_1d)
-    I_1d = I(k+1)
-    
-    # Reference derivatives
-    # D_xi corresponds to first dimension (fastest varying index in our ordering?)
-    # Wait, tensor_product_nodes in MeshGen.jl:
-    # for k (z), for j (y), for i (x)
-    # So x is fastest, then y, then z.
-    # So index = (iz-1)*... + (iy-1)*... + ix
-    # D_xi acts on ix. So D_xi = I_z (x) I_y (x) D_1d
-    
-    D_xi_local = kron(I_1d, kron(I_1d, D_1d))
-    D_eta_local = kron(I_1d, kron(D_1d, I_1d))
-    D_zeta_local = kron(D_1d, kron(I_1d, I_1d))
+    # Use cached operators
+    D_xi_local = ref_el.D_xi_local
+    D_eta_local = ref_el.D_eta_local
+    D_zeta_local = ref_el.D_zeta_local
     
     # Pre-allocate element operators
     Dx_elems = Vector{SparseMatrixCSC{T, Int}}(undef, n_elems)

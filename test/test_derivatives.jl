@@ -114,8 +114,9 @@ end
     x_fine = MultiGridBarrier3d.promote_to_Qk(K_q1, k)
     
     # Build operators manually since we don't have a full Geometry object
-    # But build_operators expects matrix x.
-    ops = MultiGridBarrier3d.build_operators(x_fine, k)
+    # But build_operators expects matrix x and ReferenceElement.
+    ref_el = MultiGridBarrier3d.ReferenceElement(k)
+    ops = MultiGridBarrier3d.build_operators(x_fine, ref_el)
     Dx = ops[:dx]
     Dy = ops[:dy]
     Dz = ops[:dz]
