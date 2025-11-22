@@ -17,7 +17,7 @@ sol = fem3d_solve(L=2, k=1, verbose=false)
 
 # Plot the solution
 # This uses PyVista backend but extends PyPlot API
-fig = plot(sol, volume=true, show_grid=true)
+fig = plot(sol, volume=(;), show_grid=true)
 savefig(fig, "fem3d_demo.png"); nothing # hide
 close() # hide
 ```
@@ -28,5 +28,5 @@ close() # hide
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/username/MultiGridBarrier3d.jl")
+Pkg.add(url="https://github.com/sloisel/MultiGridBarrier3d.jl")
 ```

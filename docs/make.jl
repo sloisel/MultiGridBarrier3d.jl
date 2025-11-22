@@ -18,6 +18,6 @@ makedocs(
     checkdocs = :exports
 )
 
-# deploydocs(
-#     repo = "github.com/username/MultiGridBarrier3d.jl.git",
-# )
+deploydocs(
+    repo = "github.com/sloisel/MultiGridBarrier3d.jl.git",
+)

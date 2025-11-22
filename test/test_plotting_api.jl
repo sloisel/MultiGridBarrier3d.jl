@@ -13,8 +13,18 @@ using Test
     
     # Test plot(geo, u)
     println("Testing plot(geo, u)...")
-    fig = plot(geo, u; volume=true, show_grid=false)
+    fig = plot(geo, u; volume=(;), show_grid=false)
     @test fig isa MultiGridBarrier3d.Plotting.MGB3DFigure
+
+    # Test with options
+    println("Testing plot with options...")
+    fig_opts = plot(geo, u; 
+        volume=(cmap="magma",),
+        isosurfaces=[0.5],
+        contour_mesh=(color="black",),
+        slice_orthogonal=(x=0.5,)
+    )
+    @test fig_opts isa MultiGridBarrier3d.Plotting.MGB3DFigure
     
     # Test savefig
     println("Testing savefig...")

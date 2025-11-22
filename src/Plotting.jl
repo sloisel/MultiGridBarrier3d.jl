@@ -51,14 +51,16 @@ end
 
 """
     plot(geo::Geometry, u::Vector; 
-         volume=true, 
+         volume=(;), 
          isosurfaces=T[], 
+         contour_mesh=(opacity=0.5;),
          slice_orthogonal=nothing, 
+         slice_orthogonal_mesh=(;),
          slice=nothing, 
+         slice_mesh=(;),
          slice_along_axis=nothing, 
+         slice_along_axis_mesh=(;),
          resolution=(800, 600),
-         cmap="viridis",
-         opacity="sigmoid",
          show_grid=false,
          camera_position=nothing,
          u_name="u")
@@ -69,30 +71,53 @@ Extends `PyPlot.plot`.
 # Arguments
 - `geo`: Geometry object.
 - `u`: Solution vector.
-- `volume`: Boolean, whether to render volume.
+- `volume`: NamedTuple of options for `add_volume` (e.g. `(cmap="viridis", opacity="sigmoid")`). Pass `nothing` to disable volume rendering.
 - `isosurfaces`: Vector of isosurface values.
+- `contour_mesh`: NamedTuple of options for `add_mesh` for the isosurfaces.
 - `slice_orthogonal`: Dictionary or NamedTuple of options for `slice_orthogonal` filter (e.g., `Dict(:x=>0.5)` or `(x=0.5, y=0.5)`).
+- `slice_orthogonal_mesh`: NamedTuple of options for `add_mesh` for the orthogonal slices.
 - `slice`: Dictionary or NamedTuple of options for `slice` filter (e.g., `Dict(:normal=>"z")` or `(normal="z",)`).
+- `slice_mesh`: NamedTuple of options for `add_mesh` for the slices.
 - `slice_along_axis`: Dictionary or NamedTuple of options for `slice_along_axis` filter.
+- `slice_along_axis_mesh`: NamedTuple of options for `add_mesh` for the slices along axis.
 - `resolution`: Image resolution (width, height).
-- `cmap`: Colormap name.
-- `opacity`: Opacity mapping for volume rendering.
 - `show_grid`: Show the wireframe grid.
 - `camera_position`: Optional camera position.
 - `u_name`: Name of the scalar field (default "u").
 
 # Returns
 - `MGB3DFigure`: Object that displays as a PNG in Jupyter.
+
+# Examples
+
+```julia
+# Default volume rendering
+plot(geo, u; volume=(;))
+
+# Volume rendering with specific colormap and opacity
+plot(geo, u; volume=(cmap="magma", opacity="linear"))
+
+# Isosurfaces with custom mesh style
+plot(geo, u; isosurfaces=[0.1, 0.5], contour_mesh=(color="black", opacity=0.5))
+
+# Orthogonal slices
+plot(geo, u; slice_orthogonal=(x=0.0, y=0.0, z=0.0))
+
+# Slices along a normal vector
+plot(geo, u; slice=(normal=[1,1,1], origin=[0,0,0]))
+```
 """
 function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T}; 
-                       volume=true, 
+                       volume=(;), 
                        isosurfaces=T[], 
+                       contour_mesh=(opacity=0.5;),
                        slice_orthogonal=nothing,
+                       slice_orthogonal_mesh=(;),
                        slice=nothing,
+                       slice_mesh=(;),
                        slice_along_axis=nothing,
+                       slice_along_axis_mesh=(;),
                        resolution=(800, 600),
-                       cmap="viridis",
-                       opacity="sigmoid",
                        show_grid=false,
                        camera_position=nothing,
                        u_name="u") where {T,X,W,M,k}
@@ -114,8 +139,8 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
     # Setup plotter
     pl = pv.Plotter(off_screen=true, window_size=resolution)
     
-    if volume
-        pl.add_volume(grid, scalars=u_name, cmap=cmap, opacity=opacity, show_scalar_bar=true)
+    if !isnothing(volume)
+        pl.add_volume(grid, scalars=u_name; volume...)
     end
     
     if length(isosurfaces)>0
@@ -125,7 +150,7 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
             contours = grid.contour(isosurfaces=collect(isosurfaces), scalars=u_name)
 #        end
         if contours.n_points > 0
-            pl.add_mesh(contours, opacity=0.5, show_scalar_bar=false, cmap=cmap)
+            pl.add_mesh(contours; contour_mesh...) #, opacity=0.5, show_scalar_bar=false, cmap=cmap)
         else
             @warn "Isosurface generation resulted in an empty mesh. Check if isosurface values are within the range of the solution."
         end
@@ -134,17 +159,17 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
     # New slicing options passed as dictionaries
     if !isnothing(slice_orthogonal)
         sl = grid.slice_orthogonal(; slice_orthogonal...)
-        pl.add_mesh(sl, show_scalar_bar=false, cmap=cmap)
+        pl.add_mesh(sl; slice_orthogonal_mesh...)
     end
 
     if !isnothing(slice)
         sl = grid.slice(; slice...)
-        pl.add_mesh(sl, show_scalar_bar=false, cmap=cmap)
+        pl.add_mesh(sl; slice_mesh...)
     end
 
     if !isnothing(slice_along_axis)
         sl = grid.slice_along_axis(; slice_along_axis...)
-        pl.add_mesh(sl, show_scalar_bar=false, cmap=cmap)
+        pl.add_mesh(sl; slice_along_axis_mesh...)
     end
 
     if show_grid

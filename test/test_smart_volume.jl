@@ -14,14 +14,14 @@ pv = Plotting.pv
 geo = fem3d(L=1, k=1)
 u = zeros(size(geo.x, 1))
 
-println("Testing default behavior (volume=true)...")
+println("Testing default behavior (volume=(;))...")
 plot(geo, u) 
 
 println("Testing with isosurfaces (volume should be false)...")
 # This should NOT show volume. We can't verify visually here, but we can ensure it runs.
 plot(geo, u; isosurfaces=[0.5])
 
-println("Testing with isosurfaces AND volume=true...")
-plot(geo, u; isosurfaces=[0.5], volume=true)
+println("Testing with isosurfaces AND volume=(;)...")
+plot(geo, u; isosurfaces=[0.5], volume=(;))
 
 println("Tests finished.")
