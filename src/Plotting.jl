@@ -96,7 +96,7 @@ plot(sol; plotter=(window_size=(1600, 1200),))
 function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T}; 
                        plotter::NamedTuple=(window_size=(800, 600),),
                        volume=(;),
-                       scalar_bar_args=(title="",position_x=0.6,position_y=0.0,width=0.35,height=0.05),
+                       scalar_bar_args=(title="",position_x=0.6,position_y=0.0,width=0.35,height=0.05,use_opacity=false),
                        isosurfaces=[0.1,0.3,0.5,0.7,0.9]*(maximum(u)-minimum(u)).+minimum(u), 
                        contour_mesh=(;),
                        slice_orthogonal=nothing,
