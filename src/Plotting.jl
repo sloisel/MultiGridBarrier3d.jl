@@ -38,18 +38,19 @@ function savefig(fig::MGB3DFigure, filename::String)
 end
 
 """
-    plot(geo::Geometry, u::Vector; 
-         volume=(;), 
-         isosurfaces=T[], 
+    plot(geo::Geometry, u::Vector;
+         plotter=(window_size=(800, 600),),
+         volume=(;),
+         scalar_bar_args=(title="", position_x=0.6, position_y=0.0, width=0.35, height=0.1),
+         isosurfaces=[0.1, 0.3, 0.5, 0.7, 0.9]*(max-min)+min,
          contour_mesh=(;),
-         slice_orthogonal=nothing, 
+         slice_orthogonal=nothing,
          slice_orthogonal_mesh=(;),
-         slice=nothing, 
+         slice=nothing,
          slice_mesh=(;),
-         slice_along_axis=nothing, 
+         slice_along_axis=nothing,
          slice_along_axis_mesh=(;),
-         resolution=(800, 600),
-         show_grid=false,
+         show_grid=true,
          camera_position=nothing,
          kwargs...)
 
@@ -59,39 +60,49 @@ Extends `PyPlot.plot`.
 # Arguments
 - `geo`: Geometry object.
 - `u`: Solution vector.
-- `volume`: NamedTuple of options for `add_volume` (e.g. `(cmap="viridis", opacity="sigmoid")`). Pass `nothing` to disable volume rendering.
-- `isosurfaces`: Vector of isosurface values.
+- `plotter`: NamedTuple of options passed to `pv.Plotter()` (e.g., `(window_size=(1200, 900),)`).
+- `volume`: NamedTuple of options for `add_volume` (e.g., `(cmap="viridis", opacity="sigmoid")`). Pass `nothing` to disable volume rendering.
+- `scalar_bar_args`: NamedTuple of options for `add_scalar_bar`. Pass `nothing` to hide the scalar bar.
+- `isosurfaces`: Vector of isosurface values. Defaults to 5 evenly spaced values across the solution range. Pass an empty vector `[]` to disable isosurfaces.
 - `contour_mesh`: NamedTuple of options for `add_mesh` for the isosurfaces.
-- `slice_orthogonal`: Dictionary or NamedTuple of options for `slice_orthogonal` filter (e.g., `Dict(:x=>0.5)` or `(x=0.5, y=0.5)`).
+- `slice_orthogonal`: NamedTuple of options for `slice_orthogonal` filter (e.g., `(x=0.5, y=0.5)`).
 - `slice_orthogonal_mesh`: NamedTuple of options for `add_mesh` for the orthogonal slices.
-- `slice`: Dictionary or NamedTuple of options for `slice` filter (e.g., `Dict(:normal=>"z")` or `(normal="z",)`).
+- `slice`: NamedTuple of options for `slice` filter (e.g., `(normal="z",)` or `(normal=[1,1,1], origin=[0,0,0])`).
 - `slice_mesh`: NamedTuple of options for `add_mesh` for the slices.
-- `slice_along_axis`: Dictionary or NamedTuple of options for `slice_along_axis` filter.
+- `slice_along_axis`: NamedTuple of options for `slice_along_axis` filter.
 - `slice_along_axis_mesh`: NamedTuple of options for `add_mesh` for the slices along axis.
-- `resolution`: Image resolution (width, height).
-- `show_grid`: Show the wireframe grid.
+- `show_grid`: Show the coordinate axes grid (default: `true`).
 - `camera_position`: Optional camera position.
 
 # Returns
-- `MGB3DFigure`: Object that displays as a PNG in Jupyter.
+- `MGB3DFigure`: Object that displays as a PNG in Jupyter. Use `savefig(fig, "file.png")` to save.
 
 # Examples
 
 ```julia
-# Default volume rendering
-plot(geo, u; volume=(;))
+# Default: volume rendering with 5 isosurfaces
+plot(geo, u)
 
-# Volume rendering with specific colormap and opacity
+# Volume rendering only (no isosurfaces)
+plot(geo, u; isosurfaces=[])
+
+# Volume rendering with custom colormap and opacity
 plot(geo, u; volume=(cmap="magma", opacity="linear"))
 
-# Isosurfaces with custom mesh style
+# Disable volume rendering, show only isosurfaces
+plot(geo, u; volume=nothing)
+
+# Custom isosurface values
 plot(geo, u; isosurfaces=[0.1, 0.5], contour_mesh=(color="black", opacity=0.5))
 
-# Orthogonal slices
+# Orthogonal slices at specific coordinates
 plot(geo, u; slice_orthogonal=(x=0.0, y=0.0, z=0.0))
 
-# Slices along a normal vector
+# Slice along a normal vector
 plot(geo, u; slice=(normal=[1,1,1], origin=[0,0,0]))
+
+# High resolution output
+plot(geo, u; plotter=(window_size=(1600, 1200),))
 ```
 """
 function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T}; 
