@@ -131,9 +131,6 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
     
     if !isnothing(volume)
         pl.add_volume(grid, scalars=u_name; show_scalar_bar=false, volume...)
-        if !isnothing(scalar_bar_args)
-            pl.add_scalar_bar(;scalar_bar_args...)
-        end
     end
     
     if length(isosurfaces)>0
@@ -167,6 +164,10 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
     
     if !isnothing(camera_position)
         pl.camera_position = camera_position
+    end
+    
+    if !isnothing(scalar_bar_args)
+        pl.add_scalar_bar(;scalar_bar_args...)
     end
 
     # Render to numpy array
