@@ -13,7 +13,7 @@ using MultiGridBarrier3d
 sol = fem3d_solve(L=2, verbose=false)
 
 # Plot the solution using PyVista
-fig = plot(sol, show_grid=true, isosurfaces=[1.1,1.2,1.5])
+fig = plot(sol)
 savefig(fig, "fem3d_demo.png"); nothing # hide
 ```
 
