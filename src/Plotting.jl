@@ -34,7 +34,7 @@ Save the figure to a file (e.g., "plot.png").
 Extends `PyPlot.savefig`.
 """
 function savefig(fig::MGB3DFigure, filename::String)
-    PNGFiles.save(filename, fig.png)
+    write(filename, fig.png)
 end
 
 """
