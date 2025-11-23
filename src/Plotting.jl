@@ -20,21 +20,11 @@ function __init__()
 end
 
 struct MGB3DFigure
-    plotter::PyObject
+    png::Vector{UInt8}
 end
 
 function Base.show(io::IO, ::MIME"image/png", fig::MGB3DFigure)
-    # Render to numpy array
-    img_np = fig.plotter.show(screenshot=true)
-    
-    # Convert to Julia array
-    img_array = convert(Array, img_np)
-    
-    # Save to IOBuffer as PNG
-    buf = IOBuffer()
-    PNGFiles.save(buf, img_array)
-    seekstart(buf)
-    write(io, take!(buf))
+    write(io, fig.png)
 end
 
 """
@@ -44,16 +34,14 @@ Save the figure to a file (e.g., "plot.png").
 Extends `PyPlot.savefig`.
 """
 function savefig(fig::MGB3DFigure, filename::String)
-    img_np = fig.plotter.show(screenshot=true)
-    img_array = convert(Array, img_np)
-    PNGFiles.save(filename, img_array)
+    PNGFiles.save(filename, fig.png)
 end
 
 """
     plot(geo::Geometry, u::Vector; 
          volume=(;), 
          isosurfaces=T[], 
-         contour_mesh=(opacity=0.5,),
+         contour_mesh=(;),
          slice_orthogonal=nothing, 
          slice_orthogonal_mesh=(;),
          slice=nothing, 
@@ -107,17 +95,18 @@ plot(geo, u; slice=(normal=[1,1,1], origin=[0,0,0]))
 ```
 """
 function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T}; 
-                       volume=(;), 
-                       isosurfaces=T[], 
-                       contour_mesh=(opacity=0.5,),
+                       plotter::NamedTuple=(window_size=(800, 600),),
+                       volume=(;),
+                       scalar_bar_args=(title="",position_x=0.6,position_y=0.0,width=0.35,height=0.1),
+                       isosurfaces=[0.1,0.3,0.5,0.7,0.9]*(maximum(u)-minimum(u)).+minimum(u), 
+                       contour_mesh=(;),
                        slice_orthogonal=nothing,
                        slice_orthogonal_mesh=(;),
                        slice=nothing,
                        slice_mesh=(;),
                        slice_along_axis=nothing,
                        slice_along_axis_mesh=(;),
-                       resolution=(800, 600),
-                       show_grid=false,
+                       show_grid=true,
                        camera_position=nothing,
                        kwargs...) where {T,X,W,M,k}
     
@@ -139,10 +128,13 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
     grid.point_data.set_scalars(u, u_name)
     
     # Setup plotter
-    pl = pv.Plotter(off_screen=true, window_size=resolution)
+    pl = pv.Plotter(off_screen=true;plotter...)
     
     if !isnothing(volume)
         pl.add_volume(grid, scalars=u_name; show_scalar_bar=false, volume...)
+        if !isnothing(scalar_bar_args)
+            pl.add_scalar_bar(;scalar_bar_args...)
+        end
     end
     
     if length(isosurfaces)>0
@@ -178,7 +170,20 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
         pl.camera_position = camera_position
     end
 
-    return MGB3DFigure(pl)
+    # Render to numpy array
+    img_np = pl.show(screenshot=true)
+    
+    # Convert to Julia array
+    img_array = convert(Array, img_np)
+    
+    # Save to IOBuffer as PNG
+    buf = IOBuffer()
+    PNGFiles.save(buf, img_array)
+    seekstart(buf)
+    png = take!(buf)
+    pl.close()
+
+    return MGB3DFigure(png)
 end
 
 
