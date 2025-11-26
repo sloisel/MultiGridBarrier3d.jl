@@ -1,4 +1,14 @@
-# MultiGridBarrier3d.jl
+```@meta
+CurrentModule = MultiGridBarrier3d
+```
+
+```@eval
+using Markdown
+using Pkg
+using MultiGridBarrier3d
+v = string(pkgversion(MultiGridBarrier3d))
+md"# MultiGridBarrier3d.jl $v"
+```
 
 A Julia package for solving 3D PDEs using the Spectral Barrier Method with hexahedral finite elements.
 

@@ -6,8 +6,11 @@ using Documenter
 using MultiGridBarrier3d
 using PyPlot
 
+# Compute version dynamically
+version = string(pkgversion(MultiGridBarrier3d))
+
 makedocs(
-    sitename = "MultiGridBarrier3d.jl",
+    sitename = "MultiGridBarrier3d.jl $version",
     remotes = nothing,
     warnonly = [:missing_docs, :cross_references, :docs_block],
     modules = [MultiGridBarrier3d],
