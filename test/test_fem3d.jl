@@ -7,7 +7,8 @@ using Test
     # Test default creation
     geo = fem3d(Float64; L=L, k=k)
     
-    @test geo.discretization isa FEM3D{k, Float64}
+    @test geo.discretization isa FEM3D{Float64}
+    @test geo.discretization.k == k
     @test geo.discretization.L == L
     
     # Check K is the standard cube

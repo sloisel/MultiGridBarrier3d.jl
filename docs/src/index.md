@@ -23,5 +23,5 @@ savefig(fig, "fem3d_demo.png"); nothing # hide
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/sloisel/MultiGridBarrier3d.jl")
+Pkg.add("MultiGridBarrier3d")
 ```

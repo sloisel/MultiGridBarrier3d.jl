@@ -1,15 +1,17 @@
 abstract type AbstractDiscretization end
 
 """
-    FEM3D{k, T}
+    FEM3D{T}
 
-Discretization type for 3D hexahedral finite elements of order `k`.
+Discretization type for 3D hexahedral finite elements.
 
 # Fields
+- `k::Int`: Polynomial order of elements.
 - `K::Matrix{T}`: Coarse mesh vertices (N x 3).
 - `L::Int`: Number of multigrid levels.
 """
-struct FEM3D{k, T} <: AbstractDiscretization
+struct FEM3D{T} <: AbstractDiscretization
+    k::Int
     K::Matrix{T}
     L::Int
 end
@@ -160,7 +162,7 @@ function fem3d(::Type{T}=Float64; L::Int=2, K=nothing, k::Int=3, rest...) where 
     ops::Dict{Symbol, SparseMatrixCSC{T, Int}} = build_operators(meshes[L], ref_el)
     
     # Discretization object
-    disc = FEM3D{k, T}(K_q1, L)
+    disc = FEM3D{T}(k, K_q1, L)
 
     
     return Geometry(
@@ -319,10 +321,11 @@ end
 Evaluate the finite element field `u` at point `x_eval`.
 Returns the value and a flag indicating if the point was found.
 """
-function evaluate_field(g::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T}, x_eval::Vector{T}) where {T,X,W,M,k}
+function evaluate_field(g::Geometry{T,X,W,M,FEM3D{T}}, u::Vector{T}, x_eval::Vector{T}) where {T,X,W,M}
+    k = g.discretization.k
     n_nodes_per_elem = (k+1)^3
     n_elems = div(size(g.x, 1), n_nodes_per_elem)
-    
+
     nodes_1d = chebyshev_nodes(k)
     
     for e in 1:n_elems

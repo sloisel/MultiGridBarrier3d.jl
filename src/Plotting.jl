@@ -93,11 +93,11 @@ plot(sol; slice=(normal=[1,1,1], origin=[0,0,0]))
 plot(sol; plotter=(window_size=(1600, 1200),))
 ```
 """
-function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T}; 
+function plot(geo::Geometry{T,X,W,M,FEM3D{T}}, u::Vector{T};
                        plotter::NamedTuple=(window_size=(800, 600),),
                        volume=(;),
                        scalar_bar_args=(title="",position_x=0.6,position_y=0.0,width=0.35,height=0.05,use_opacity=false),
-                       isosurfaces=[0.1,0.3,0.5,0.7,0.9]*(maximum(u)-minimum(u)).+minimum(u), 
+                       isosurfaces=[0.1,0.3,0.5,0.7,0.9]*(maximum(u)-minimum(u)).+minimum(u),
                        contour_mesh=(;),
                        slice_orthogonal=nothing,
                        slice_orthogonal_mesh=(;),
@@ -107,7 +107,9 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{k, T}}, u::Vector{T};
                        slice_along_axis_mesh=(;),
                        show_grid=true,
                        camera_position=nothing,
-                       kwargs...) where {T,X,W,M,k}
+                       kwargs...) where {T,X,W,M}
+
+    k = geo.discretization.k
     
     # Internal name for the scalar field
     u_name = "u"
