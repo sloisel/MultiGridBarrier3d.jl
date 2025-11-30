@@ -94,3 +94,15 @@ using LinearAlgebra
         @test false
     end
 end
+
+@testset "Parabolic Solver Tests" begin
+    println("Testing parabolic_solve with FEM3D")
+
+    # Minimal problem: L=1 (coarsest), h=0.5 (few time steps)
+    sol = parabolic_solve(fem3d(L=1); h=0.5, verbose=false)
+    @test sol isa MultiGridBarrier.ParabolicSOL
+
+    # Test that plot(sol) works (covers the ParabolicSOL plot method)
+    fig = plot(sol)
+    @test fig isa MultiGridBarrier3d.Plotting.HTML5anim
+end
