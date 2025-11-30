@@ -49,8 +49,7 @@ jobs:
       - name: Build package with system Python
         env:
           PYTHON: python
-        run: julia --project=. -e 'using Pkg; Pkg.build("PyCall")'
-      - uses: julia-actions/julia-buildpkg@v1
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.build("PyCall")'
       - name: Run tests with XVFB
         run: xvfb-run --auto-servernum julia --project=. -e 'using Pkg; Pkg.test(coverage=true)'
       - uses: julia-actions/julia-processcoverage@v1
