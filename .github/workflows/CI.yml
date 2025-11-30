@@ -46,6 +46,10 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v2
+      - name: Build package with system Python
+        env:
+          PYTHON: python
+        run: julia --project=. -e 'using Pkg; Pkg.build("PyCall")'
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run tests with XVFB
         run: xvfb-run --auto-servernum julia --project=. -e 'using Pkg; Pkg.test(coverage=true)'
@@ -79,11 +83,14 @@ jobs:
           arch: x64
       - uses: julia-actions/cache@v2
       - name: Configure doc environment
+        env:
+          PYTHON: python
         shell: julia --project=docs --color=yes {0}
         run: |
           using Pkg
           Pkg.develop(PackageSpec(path=pwd()))
           Pkg.instantiate()
+          Pkg.build("PyCall")
       - name: Run doctests and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
