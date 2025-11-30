@@ -281,6 +281,9 @@ Create an animated 3D visualization from a time series of solutions.
 The animation uses ffmpeg to encode PNG frames into an MP4 video. Frames are
 piped directly to ffmpeg without temporary files. The video is embedded as
 base64-encoded data in an HTML5 video tag.
+
+Color limits (`clim`) and `isosurfaces` are automatically computed from the global
+range of U across all frames to ensure consistent visualization throughout the animation.
 """
 function plot(M::Geometry{T,X,W,Mat,FEM3D{T}}, ts::AbstractVector, U::Matrix{T};
               frame_time::Real = max(0.001, minimum(diff(ts))),
@@ -293,6 +296,35 @@ function plot(M::Geometry{T,X,W,Mat,FEM3D{T}}, ts::AbstractVector, U::Matrix{T};
     end
     if any(diff(ts) .< 0)
         error("ts must be nondecreasing")
+    end
+
+    # Compute global color limits across ALL frames for consistent visualization
+    global_min = minimum(U)
+    global_max = maximum(U)
+    clim = (global_min, global_max)
+
+    # Build plot kwargs with fixed limits (user can override)
+    plot_kwargs = Dict{Symbol,Any}(kwargs)
+
+    # Set fixed isosurfaces from global range (unless user provided)
+    if !haskey(plot_kwargs, :isosurfaces)
+        plot_kwargs[:isosurfaces] = [0.1, 0.3, 0.5, 0.7, 0.9] .* (global_max - global_min) .+ global_min
+    end
+
+    # Inject clim into volume kwargs (unless user provided or volume=nothing)
+    volume_kw = get(plot_kwargs, :volume, (;))
+    if !isnothing(volume_kw)
+        volume_kw = NamedTuple(volume_kw)
+        if !haskey(volume_kw, :clim)
+            plot_kwargs[:volume] = merge(volume_kw, (clim=clim,))
+        end
+    end
+
+    # Inject clim into contour_mesh kwargs (unless user provided)
+    contour_kw = get(plot_kwargs, :contour_mesh, (;))
+    contour_kw = NamedTuple(contour_kw)
+    if !haskey(contour_kw, :clim)
+        plot_kwargs[:contour_mesh] = merge(contour_kw, (clim=clim,))
     end
 
     # Build a fixed-FPS timeline
@@ -316,8 +348,8 @@ function plot(M::Geometry{T,X,W,Mat,FEM3D{T}}, ts::AbstractVector, U::Matrix{T};
                 while current_idx < nframes && ts0[current_idx + 1] <= t
                     current_idx += 1
                 end
-                # Generate frame
-                fig = plot(M, U[:, current_idx]; kwargs...)
+                # Generate frame with fixed limits
+                fig = plot(M, U[:, current_idx]; plot_kwargs...)
                 write(proc, fig.png)
             end
             close(proc.in)

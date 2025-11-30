@@ -29,6 +29,14 @@ savefig(fig, "fem3d_demo.png"); nothing # hide
 
 ![](fem3d_demo.png)
 
+## Parabolic problems
+
+A time-dependent 3D problem:
+
+```@example 1
+plot(parabolic_solve(fem3d(L=2);h=0.1,verbose=false))
+```
+
 ## Installation
 
 ```julia
