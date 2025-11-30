@@ -334,7 +334,7 @@ function plot(M::Geometry{T,X,W,Mat,FEM3D{T}}, ts::AbstractVector, U::Matrix{T};
     n_video_frames = max(1, Int(floor(total_time / frame_time)) + 1)
 
     # Setup ffmpeg pipeline: PNG input via stdin, MP4 output via stdout
-    ffmpeg_cmd = `$(ffmpeg()) -y -f image2pipe -framerate $fps -i pipe:0 -c:v libx264 -pix_fmt yuv420p -movflags frag_keyframe+empty_moov -f mp4 pipe:1`
+    ffmpeg_cmd = `$(ffmpeg()) -y -loglevel quiet -f image2pipe -framerate $fps -i pipe:0 -c:v libx264 -pix_fmt yuv420p -movflags frag_keyframe+empty_moov -f mp4 pipe:1`
 
     mp4_bytes = UInt8[]
 
