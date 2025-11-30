@@ -15,6 +15,7 @@ export plot, savefig, MGB3DFigure, HTML5anim
 const VTK_HEXAHEDRON = 12
 
 const pv = PyNULL()
+const _plotter = Ref{Any}(nothing)
 
 function __init__()
     copy!(pv, pyimport_conda("pyvista", "pyvista", "conda-forge"))
@@ -111,31 +112,35 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{T}}, u::Vector{T};
                        kwargs...) where {T,X,W,M}
 
     k = geo.discretization.k
-    
+
     # Internal name for the scalar field
     u_name = "u"
-
-    # Smart default for volume: if isosurfaces or slices are present, default volume to false, else true.
-#    if isnothing(volume)
-#        volume = isnothing(isosurfaces) && isnothing(slices)
-#    end
 
     # Create unstructured grid
     points = geo.x
     cells, cell_types = create_vtk_cells(k, size(points, 1))
-    
+
     grid = pv.UnstructuredGrid(cells, cell_types, points)
-    
+
     # Add data
     grid.point_data.set_scalars(u, u_name)
-    
-    # Setup plotter
-    pl = pv.Plotter(off_screen=true;plotter...)
-    
+
+    # Reuse plotter to avoid macOS "Context leak detected" error
+    if isnothing(_plotter[])
+        _plotter[] = pv.Plotter(off_screen=true; plotter...)
+    end
+    pl = _plotter[]
+
+    # Clear previous actors and reset state
+    pl.clear()
+    pl.remove_bounds_axes()
+    pl.reset_camera()
+    pl.enable_lightkit()  # Re-enable default lighting (clear() removes lights)
+
     if !isnothing(volume)
         pl.add_volume(grid, scalars=u_name; show_scalar_bar=false, volume...)
     end
-    
+
     if length(isosurfaces)>0
         contours = grid.contour(isosurfaces=collect(isosurfaces), scalars=u_name)
         if contours.n_points > 0
@@ -144,7 +149,7 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{T}}, u::Vector{T};
             @warn "Isosurface generation resulted in an empty mesh. Check if isosurface values are within the range of the solution."
         end
     end
-    
+
     # New slicing options passed as dictionaries
     if !isnothing(slice_orthogonal)
         sl = grid.slice_orthogonal(; slice_orthogonal...)
@@ -164,29 +169,28 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{T}}, u::Vector{T};
     if show_grid
         pl.show_grid()
     end
-    
+
     if !isnothing(camera_position)
         pl.camera_position = camera_position
     end
-    
+
     if !isnothing(scalar_bar_args)
         pl.add_scalar_bar(;scalar_bar_args...)
     end
 
-    # Render to numpy array
-    img_np = pl.show(screenshot=true)
-    
+    # Render to numpy array (use screenshot instead of show to keep plotter alive)
+    img_np = pl.screenshot(return_img=true)
+
     # Convert to Julia array
     img_array = convert(Array, img_np)
-    
+
     # Save to IOBuffer as PNG
     buf = IOBuffer()
     PNGFiles.save(buf, img_array)
     seekstart(buf)
-    png = take!(buf)
-    pl.close()
+    png_data = take!(buf)
 
-    return MGB3DFigure(png)
+    return MGB3DFigure(png_data)
 end
 
 
