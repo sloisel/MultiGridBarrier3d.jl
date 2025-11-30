@@ -3,12 +3,13 @@ module Plotting
 using PyCall
 import PyPlot: plot, savefig
 using ..MultiGridBarrier3d: Geometry, FEM3D
-using MultiGridBarrier: AMGBSOL
+using MultiGridBarrier: AMGBSOL, ParabolicSOL, HTML5anim
 using FileIO
 using PNGFiles
 using Base64
+using FFMPEG: ffmpeg
 
-export plot, savefig, MGB3DFigure
+export plot, savefig, MGB3DFigure, HTML5anim
 
 # VTK Cell Types
 const VTK_HEXAHEDRON = 12
@@ -257,6 +258,100 @@ function create_vtk_cells(k::Int, n_total_nodes::Int)
     end
     
     return cells, cell_types
+end
+
+"""
+    plot(M::Geometry{T,X,W,Mat,FEM3D{T}}, ts::AbstractVector, U::Matrix{T}; kwargs...)
+
+Create an animated 3D visualization from a time series of solutions.
+
+# Arguments
+- `M`: The geometry (must be FEM3D)
+- `ts`: Vector of timestamps (length must equal number of columns in U)
+- `U`: Matrix of solutions, each column is a frame (n_nodes × n_frames)
+
+# Keyword Arguments
+- `frame_time::Real`: Time between video frames in seconds (default: `max(0.001, minimum(diff(ts)))`)
+- All other kwargs are passed to the static `plot` function for each frame.
+
+# Returns
+- `HTML5anim`: An HTML5 video that displays in Jupyter notebooks.
+
+# Notes
+The animation uses ffmpeg to encode PNG frames into an MP4 video. Frames are
+piped directly to ffmpeg without temporary files. The video is embedded as
+base64-encoded data in an HTML5 video tag.
+"""
+function plot(M::Geometry{T,X,W,Mat,FEM3D{T}}, ts::AbstractVector, U::Matrix{T};
+              frame_time::Real = max(0.001, minimum(diff(ts))),
+              kwargs...) where {T,X,W,Mat}
+
+    nframes = size(U, 2)
+
+    if length(ts) != nframes
+        error("length(ts)=$(length(ts)) must equal number of frames=$(nframes)")
+    end
+    if any(diff(ts) .< 0)
+        error("ts must be nondecreasing")
+    end
+
+    # Build a fixed-FPS timeline
+    ts0 = ts .- ts[1]  # relative times starting at 0
+    total_time = ts0[end]
+    fps = 1.0 / frame_time
+    n_video_frames = max(1, Int(floor(total_time / frame_time)) + 1)
+
+    # Setup ffmpeg pipeline: PNG input via stdin, MP4 output via stdout
+    ffmpeg_cmd = `$(ffmpeg()) -y -f image2pipe -framerate $fps -i pipe:0 -c:v libx264 -pix_fmt yuv420p -movflags frag_keyframe+empty_moov -f mp4 pipe:1`
+
+    mp4_bytes = UInt8[]
+
+    open(ffmpeg_cmd, "r+") do proc
+        # Writer task: generate frames and write to ffmpeg stdin
+        writer = @async begin
+            current_idx = 1
+            for j in 0:n_video_frames-1
+                t = min(j * frame_time, total_time)
+                # Advance to the latest data frame not exceeding time t
+                while current_idx < nframes && ts0[current_idx + 1] <= t
+                    current_idx += 1
+                end
+                # Generate frame
+                fig = plot(M, U[:, current_idx]; kwargs...)
+                write(proc, fig.png)
+            end
+            close(proc.in)
+        end
+
+        # Read MP4 output
+        mp4_bytes = read(proc)
+        wait(writer)
+    end
+
+    # Create HTML5 video tag with embedded base64 data
+    b64 = base64encode(mp4_bytes)
+    html = """<video controls autoplay loop>
+        <source src="data:video/mp4;base64,$b64" type="video/mp4">
+    </video>"""
+
+    return HTML5anim(html)
+end
+
+"""
+    plot(sol::ParabolicSOL{T,X,W,Mat,FEM3D{T}}, k::Int=1; kwargs...)
+
+Plot an animated 3D visualization of a parabolic solution.
+
+# Arguments
+- `sol`: The parabolic solution from `parabolic_solve`
+- `k`: Which solution component to plot (default: 1)
+- `kwargs...`: Passed to the animation plot method
+
+# Returns
+- `HTML5anim`: An HTML5 video that displays in Jupyter notebooks.
+"""
+function plot(sol::ParabolicSOL{T,X,W,Mat,FEM3D{T}}, k::Int=1; kwargs...) where {T,X,W,Mat}
+    return plot(sol.geometry, collect(sol.ts), sol.u[:, k, :]; kwargs...)
 end
 
 end # module
