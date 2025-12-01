@@ -52,15 +52,9 @@ Create a `Geometry` object for Q_k hexahedral elements with `L` multigrid levels
        If `nothing`, defaults to a single cube [-1,1]^3.
 - `k`: Polynomial order of elements (default 3).
 """
-function fem3d(::Type{T}=Float64; L::Int=2, K=nothing, k::Int=3, rest...) where T
+function fem3d(::Type{T}=Float64; L::Int=2, K=T[-1.0 -1.0 -1.0; 1.0 -1.0 -1.0; -1.0 1.0 -1.0; 1.0 1.0 -1.0; -1.0 -1.0 1.0; 1.0 -1.0 1.0; -1.0 1.0 1.0; 1.0 1.0 1.0], k::Int=3, rest...) where T
     # Coarse grid (Level 1)
-    if isnothing(K)
-        K_q1, _ = cube_mesh(1)
-        # Ensure K_q1 is of type T
-        K_q1 = T.(K_q1)
-    else
-        K_q1 = T.(K)
-    end
+    K_q1 = K
     
     # Promote Q1 mesh to Qk mesh for Level 1
     x = promote_to_Qk(K_q1, k)
