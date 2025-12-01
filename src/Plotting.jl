@@ -134,7 +134,6 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{T}}, u::Vector{T};
     # Clear previous actors and reset state
     pl.clear()
     pl.remove_bounds_axes()
-    pl.reset_camera()
     pl.enable_lightkit()  # Re-enable default lighting (clear() removes lights)
 
     if !isnothing(volume)
@@ -172,6 +171,8 @@ function plot(geo::Geometry{T,X,W,M,FEM3D{T}}, u::Vector{T};
 
     if !isnothing(camera_position)
         pl.camera_position = camera_position
+    else
+        pl.reset_camera()  # Fit camera to new geometry
     end
 
     if !isnothing(scalar_bar_args)
